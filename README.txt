@@ -3,11 +3,12 @@
     (also reported to work with v1.01 and v1.0 data)
 
   (c) 2005-2006 Dan Stowell
+  2010-2011 enhancements Erik Ordway
   Released under the Gnu Public Licence (GPL)
 
 INSTALLATION
 
-Please see INSTALL.txt.
+Place in the enrol directory of your moodle site.
 
 
 DESCRIPTION
@@ -47,12 +48,15 @@ because it is stored as the user's Moodle login ID.
 
 TECHNICAL NOTE
 
-The script uses an optimised pattern-matching (regex) method for
-processing the XML, rather than any built-in XML handling. This is for
+This script once used an optimised pattern-matching (regex) method for
+processing the XML, rather than any built-in XML handling. This was for
 two reasons: firstly, because some systems produce very sloppy
 (even invalid) XML and we'd like to be able to process it anyway; and
 secondly, because PHP 4 and PHP 5 handle XML differently, and we'd
-like to be independent of that changeover.
+like to be independent of that changeover.  While reason #1 is still true
+it should not be tolerated for a well specified file format.  Reason #2
+no longer true as moodle requires a version of php (5.x) that includes
+a real XML processor
 
 
 
