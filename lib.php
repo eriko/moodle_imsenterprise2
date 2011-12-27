@@ -362,7 +362,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
 						// Setup the blocks
 						$course = $DB->get_record('course', array('id' => $courseid));
 						blocks_add_default_course_blocks($course);
-						$this->order_default_course_blocks($course);
+						//$this->order_default_course_blocks($course);
 
 						$section = new stdClass();
 						$section->course = $course->id; // Create a default section.
@@ -467,7 +467,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
 					$person->confirmed = 1;
 					$person->timemodified = time();
 					$person->mnethostid = $CFG->mnet_localhost_id;
-                    $person = local_user_settings($person);
+                    //$person = $this->local_user_settings($person);
 					$id = $DB->insert_record('user', $person);
 					/*
 						Photo processing is deactivated until we hear from Moodle dev forum about modification to gdlib.
@@ -734,7 +734,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
      * @param $person
      */
 
-   function  local_user_settings($person)
+   private function local_user_settings($person)
    {
        if (isset($person->username)) {
        					$person->email = $person->username . "@evergreen.edu";
@@ -749,7 +749,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
    	 * @param  $course
    	 * @return void
    	 */
-   	function order_default_course_blocks($course)
+   	private function order_default_course_blocks($course)
    	{
    		$contextid = get_context_instance(CONTEXT_COURSE, $course->id)->id;
    		global $DB;
