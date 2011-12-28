@@ -50,6 +50,7 @@ $string['filelockedmail'] = 'The text file you are using for IMS-file-based enro
 $string['filelockedmailsubject'] = 'Important error: Enrolment file';
 $string['fixcasepersonalnames'] = 'Change personal names to Title Case';
 $string['fixcaseusernames'] = 'Change usernames to lower case';
+$string['fromweb'] = "Access via http/https";
 $string['ignore'] = 'Ignore';
 $string['importimsfile'] = 'Import IMS Enterprise file';
 $string['imsrolesdescription'] = 'The IMS Enterprise specification includes 8 distinct role types. Please choose how you want them to be assigned in Moodle, including whether any of them should be ignored.';

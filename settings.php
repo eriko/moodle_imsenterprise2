@@ -34,9 +34,9 @@ if ($ADMIN->fulltree) {
     //--- general settings -----------------------------------------------------------------------------------
     $settings->add(new admin_setting_heading('enrol_imsenterprise2_basicsettings', get_string('basicsettings', 'enrol_imsenterprise2'), ''));
 
-	$settings->add(new admin_setting_configtextarea('enrol_imsenterprise/imsfilelocation', get_string('location', 'enrol_imsenterprise'), '', '',$paramtype=PARAM_RAW, $cols='120', $rows='2'));
+	$settings->add(new admin_setting_configtextarea('enrol_imsenterprise2/imsfilelocation', get_string('location', 'enrol_imsenterprise'), '', '',$paramtype=PARAM_RAW, $cols='120', $rows='2'));
 
-	$settings->add(new admin_setting_configcheckbox('enrol_imsenterprise2/fromweb', get_string('fromweb', 'enrol_imsenterprise'), '', 0));
+	$settings->add(new admin_setting_configcheckbox('enrol_imsenterprise2/fromweb', get_string('fromweb', 'enrol_imsenterprise2'), '', 0));
 
     $settings->add(new admin_setting_configtext('enrol_imsenterprise2/logtolocation', get_string('logtolocation', 'enrol_imsenterprise2'), '', ''));
 
