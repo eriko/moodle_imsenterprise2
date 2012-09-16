@@ -113,6 +113,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
 
 		$this->log_line('the file is located at:  ' . $imsfilelocation);
 		$this->log_line('is the file from the web:  ' . $fromweb);
+        $this->log_line('the available enrolments are:' . $CFG->enrol_plugins_enabled);
 
 		if (empty($imsfilelocation)) {
 			// $filename = "$CFG->dirroot/enrol/imsenterprise/example.xml";  // Default location
@@ -359,6 +360,11 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
 
 						$courseid = $DB->insert_record('course', $course);
 
+                        //DO this externally for now
+                        // Setup default enrolment plugins
+                        //$course->id = $courseid;
+                        //enrol_course_updated(true, $course, null);
+
 						// Setup the blocks
 						$course = $DB->get_record('course', array('id' => $courseid));
 						blocks_add_default_course_blocks($course);
@@ -374,10 +380,15 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
 
 						$this->log_line("Created course $coursecode in Moodle (Moodle ID is $course->id)");
 					}
-				} elseif ($recstatus == 3 && ($courseid = $DB->get_field('course', 'id', array('idnumber' => $coursecode)))) {
-					// If course does exist, but recstatus==3 (delete), then set the course as hidden
-					$DB->set_field('course', 'visible', '0', array('id' => $courseid));
-				}
+				} else{
+                    $courseid = $DB->get_field('course', 'id', array('idnumber' => $coursecode));
+                    // If course does exist update the course title incase it changed in the upstream system.
+                    $DB->set_field('course', 'fullname', $group->fullname, array('id' => $courseid));
+                }
+                if ($recstatus == 3 && ($courseid = $DB->get_field('course', 'id', array('idnumber' => $coursecode)))) {
+                    // If course does exist, but recstatus==3 (delete), then set the course as hidden
+                    $DB->set_field('course', 'visible', '0', array('id' => $courseid));
+                }
 			} // End of foreach(coursecode)
 		}
 		return $group;
