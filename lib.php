@@ -186,15 +186,15 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                 $ims = new SimpleXMLElement($xml);
                 $this->log_line('about to process groups');
                 foreach ($ims->xpath('/enterprise/group') as $xml_group) {
-                    $this->log_line('the coursecode for the group should be:  ' . $xml_group->sourcedid->id);
+                    //$this->log_line('the coursecode for the group should be:  ' . $xml_group->sourcedid->id);
                     $group = $this->process_group_tag($xml_group);
-                    $this->log_line('processed group: ' . (string)$group->shortname);
+                    //$this->log_line('processed group: ' . (string)$group->shortname);
                 }
 
                 $this->log_line('about to process persons');
                 foreach ($ims->xpath('/enterprise/person') as $xml_person) {
                     $person = $this->process_person_tag($xml_person);
-                    $this->log_line('processed person: ' . $person->username);
+                    //$this->log_line('processed person: ' . $person->username);
                 }
 
                 $this->log_line('about to process course and group memberships');
@@ -454,7 +454,13 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
             }
 
         } else { // Add or update record
+        if ($DB->record_exists_select('user', " suspended = 1 AND idnumber = '$person->idnumber'") ) {
+            $this->log_line("The user for ID # $person->idnumber existed but is suspended.  They will be unsuspended.");
+            $description = $DB->get_field('user', 'description', array('idnumber' => $person->idnumber));
+            $DB->set_field('user', 'suspended', 0, array('idnumber' => $person->idnumber));
+            $DB->set_field('user', 'description', $description . "---UNSUSPENDED via IMS on".date('Y-m-d:H'), array('idnumber' => $person->idnumber));
 
+        }
             $tst = $DB->get_field('user', 'id', array('idnumber' => $person->idnumber));
             // If the user exists (matching sourcedid) then we don't need to do anything.
             if (!$DB->get_field('user', 'id', array('idnumber' => $person->idnumber)) && $createnewusers) {
@@ -471,7 +477,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                 }
                 else if ($DB->record_exists_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'")) {
                     $other_person = $DB->get_record_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'");
-                    $this->log_line("******The username is in use and we need to disable the previous account record for '$other_person->username' and ID number $other_person->idnumber.");
+                    $this->log_line("******The username is in use and we need to disable the previous account record for '$other_person->username' and ID number $other_person->idnumber as $person->idnumber wants it.");
                     $this->log_line("******Changing the username for '$other_person->username' and ID number $other_person->idnumber to $other_person->username.".time());
                     //$DB->set_field('user', 'suspended', 1, array('username' => $other_person->username));
                     //$DB->set_field('user', 'description', "This persons account was deactivated on ".date('Y-m-d:H')." as the idnumber no longer has an active account", array('username' => $other_person->username));
@@ -493,7 +499,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                 }
 
             } elseif ($createnewusers) {
-                $this->log_line("User record already exists for user '$person->username' (ID number $person->idnumber).");
+                //$this->log_line("User record already exists for user '$person->username' (ID number $person->idnumber).");
 
                 // Make sure their "deleted" field is set to zero.
                 $DB->set_field('user', 'deleted', 0, array('idnumber' => $person->idnumber));
@@ -605,7 +611,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                             $enrolid = $this->add_instance($courseobj);
                             $einstance = $DB->get_record('enrol', array('id' => $enrolid));
                         }
-                        $this->log_line("about to enrol_user einstance " . $einstance->id . " , memberstoreobj-userid " . $memberstoreobj->userid . ", moodleroleid " . $moodleroleid . ", begin " . $timeframe->begin . ", end " . $timeframe->end . " to course " . $memberstoreobj->course);
+                        //$this->log_line("about to enrol_user einstance " . $einstance->id . " , memberstoreobj-userid " . $memberstoreobj->userid . ", moodleroleid " . $moodleroleid . ", begin " . $timeframe->begin . ", end " . $timeframe->end . " to course " . $memberstoreobj->course);
                         $this->enrol_user($einstance, $memberstoreobj->userid, $moodleroleid, $timeframe->begin, $timeframe->end);
 
                         $this->log_line("Enrolled user #$memberstoreobj->userid ($member->idnumber) to role $member->roletype in course $memberstoreobj->course");
