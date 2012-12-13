@@ -417,9 +417,9 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
             $person->username = $person->idnumber;
         }
 
-        $person->email = (string)$xml_person->email;
+        //$person->email = (string)$xml_person->email;
         ////LOCAL set email address based on username in an attempt to stop crap from FS accounts
-        //$person->email = $person->username . '@evergreen.edu';
+        $person->email = $person->username . '@evergreen.edu';
 
         $person->url = (string)$xml_person->url;
         $person->city = (string)$xml_person->locality;
@@ -458,6 +458,9 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
             $this->log_line("The user for ID # $person->idnumber existed but is suspended.  They will be unsuspended.");
             $description = $DB->get_field('user', 'description', array('idnumber' => $person->idnumber));
             $DB->set_field('user', 'suspended', 0, array('idnumber' => $person->idnumber));
+            $DB->set_field('user', 'username', $person->username, array('idnumber' => $person->idnumber));
+            $DB->set_field('user', 'email', $person->email, array('idnumber' => $person->idnumber));
+            $DB->set_field('user', 'auth', "cas", array('idnumber' => $person->idnumber));
             $DB->set_field('user', 'description', $description . "---UNSUSPENDED via IMS on".date('Y-m-d:H'), array('idnumber' => $person->idnumber));
 
         }
@@ -472,7 +475,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                     $this->log_line("*****A User record for '$person->username' and ID number $person->idnumber is null.");
                     // If their idnumber is not registered but their user ID is and does not have an idnumber,
                     //then add their idnumber to their record
-		    //not fixing anything
+		            //not fixing anything
                     //$DB->set_field('user', 'idnumber', $person->idnumber, array('username' => $person->username));
                 }
                 else if ($DB->record_exists_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'")) {
