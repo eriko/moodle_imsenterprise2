@@ -309,83 +309,85 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
 
             // For compatibility with the (currently inactive) course aliasing, we need this to be an array
             $group->coursecode = array($group->coursecode);
+            //Does the course code exist.  If not do not create course.
+            if ((strlen($group->category) > 0) && $catid = $DB->get_field('course_categories', 'id', array('name' => $group->category))) {
+                // Third, check if the course(s) exist
+                foreach ($group->coursecode as $coursecode) {
+                    $coursecode = trim($coursecode);
+                    if (!$DB->get_field('course', 'id', array('idnumber' => $coursecode))) {
+                        if (!$createnewcourses) {
+                            $this->log_line("Course $coursecode not found in Moodle's course idnumbers.");
+                        } else {
+                            // Create the (hidden) course(s) if not found
+                            $course = new stdClass();
+                            $course->fullname = $group->fullname;
+                            $course->shortname = $group->shortname;
+                            $course->idnumber = $coursecode;
+                            $course->format = 'topics';
+                            $course->visible = 0;
+                            // Insert default names for teachers/students, from the current language
+                            $site = get_site();
 
-            // Third, check if the course(s) exist
-            foreach ($group->coursecode as $coursecode) {
-                $coursecode = trim($coursecode);
-                if (!$DB->get_field('course', 'id', array('idnumber' => $coursecode))) {
-                    if (!$createnewcourses) {
-                        $this->log_line("Course $coursecode not found in Moodle's course idnumbers.");
-                    } else {
-                        // Create the (hidden) course(s) if not found
-                        $course = new stdClass();
-                        $course->fullname = $group->fullname;
-                        $course->shortname = $group->shortname;
-                        $course->idnumber = $coursecode;
-                        $course->format = 'topics';
-                        $course->visible = 0;
-                        // Insert default names for teachers/students, from the current language
-                        $site = get_site();
-
-                        // Handle course categorisation (taken from the group.org.orgunit field if present)
-                        if (strlen($group->category) > 0) {
-                            // If the category is defined and exists in Moodle, we want to store it in that one
-                            if ($catid = $DB->get_field('course_categories', 'id', array('name' => $group->category))) {
-                                $course->category = $catid;
-                            } elseif ($createnewcategories) {
-                                // Else if we're allowed to create new categories, let's create this one
-                                $newcat = new stdClass();
-                                $newcat->name = $group->category;
-                                $newcat->visible = 1;
-                                $catid = $DB->insert_record('course_categories', $newcat);
-                                $course->category = $catid;
-                                $this->log_line("Created new (hidden) category, #$catid: $newcat->name");
+                            // Handle course categorisation (taken from the group.org.orgunit field if present)
+                            if (strlen($group->category) > 0) {
+                                // If the category is defined and exists in Moodle, we want to store it in that one
+                                if ($catid = $DB->get_field('course_categories', 'id', array('name' => $group->category))) {
+                                    $course->category = $catid;
+                                } elseif ($createnewcategories) {
+                                    // Else if we're allowed to create new categories, let's create this one
+                                    $newcat = new stdClass();
+                                    $newcat->name = $group->category;
+                                    $newcat->visible = 1;
+                                    $catid = $DB->insert_record('course_categories', $newcat);
+                                    $course->category = $catid;
+                                    $this->log_line("Created new (hidden) category, #$catid: $newcat->name");
+                                } else {
+                                    // If not found and not allowed to create, stick with default
+                                    $this->log_line('Category ' . $group->category . ' not found in Moodle database, so using default category instead.');
+                                    $course->category = 1;
+                                }
                             } else {
-                                // If not found and not allowed to create, stick with default
-                                $this->log_line('Category ' . $group->category . ' not found in Moodle database, so using default category instead.');
                                 $course->category = 1;
                             }
-                        } else {
-                            $course->category = 1;
+                            $course->timecreated = time();
+                            $course->startdate = time();
+                            $course->numsections = 11;
+                            // Choose a sort order that puts us at the start of the list!
+                            $course->sortorder = 0;
+
+                            $courseid = $DB->insert_record('course', $course);
+
+                            //DO this externally for now
+                            // Setup default enrolment plugins
+                            //$course->id = $courseid;
+                            //enrol_course_updated(true, $course, null);
+
+                            // Setup the blocks
+                            $course = $DB->get_record('course', array('id' => $courseid));
+                            blocks_add_default_course_blocks($course);
+                            //$this->order_default_course_blocks($course);
+
+                            $section = new stdClass();
+                            $section->course = $course->id; // Create a default section.
+                            $section->section = 0;
+                            $section->summaryformat = FORMAT_HTML;
+                            $section->id = $DB->insert_record("course_sections", $section);
+
+                            add_to_log(SITEID, "course", "new", "view.php?id=$course->id", "$course->fullname (ID $course->id)");
+
+                            $this->log_line("Created course $coursecode in Moodle (Moodle ID is $course->id)");
                         }
-                        $course->timecreated = time();
-                        $course->startdate = time();
-                        $course->numsections = 11;
-                        // Choose a sort order that puts us at the start of the list!
-                        $course->sortorder = 0;
-
-                        $courseid = $DB->insert_record('course', $course);
-
-                        //DO this externally for now
-                        // Setup default enrolment plugins
-                        //$course->id = $courseid;
-                        //enrol_course_updated(true, $course, null);
-
-                        // Setup the blocks
-                        $course = $DB->get_record('course', array('id' => $courseid));
-                        blocks_add_default_course_blocks($course);
-                        //$this->order_default_course_blocks($course);
-
-                        $section = new stdClass();
-                        $section->course = $course->id; // Create a default section.
-                        $section->section = 0;
-                        $section->summaryformat = FORMAT_HTML;
-                        $section->id = $DB->insert_record("course_sections", $section);
-
-                        add_to_log(SITEID, "course", "new", "view.php?id=$course->id", "$course->fullname (ID $course->id)");
-
-                        $this->log_line("Created course $coursecode in Moodle (Moodle ID is $course->id)");
+                    } else {
+                        $courseid = $DB->get_field('course', 'id', array('idnumber' => $coursecode));
+                        // If course does exist update the course title incase it changed in the upstream system.
+                        $DB->set_field('course', 'fullname', $group->fullname, array('id' => $courseid));
                     }
-                } else {
-                    $courseid = $DB->get_field('course', 'id', array('idnumber' => $coursecode));
-                    // If course does exist update the course title incase it changed in the upstream system.
-                    $DB->set_field('course', 'fullname', $group->fullname, array('id' => $courseid));
-                }
-                if ($recstatus == 3 && ($courseid = $DB->get_field('course', 'id', array('idnumber' => $coursecode)))) {
-                    // If course does exist, but recstatus==3 (delete), then set the course as hidden
-                    $DB->set_field('course', 'visible', '0', array('id' => $courseid));
-                }
-            } // End of foreach(coursecode)
+                    if ($recstatus == 3 && ($courseid = $DB->get_field('course', 'id', array('idnumber' => $coursecode)))) {
+                        // If course does exist, but recstatus==3 (delete), then set the course as hidden
+                        $DB->set_field('course', 'visible', '0', array('id' => $courseid));
+                    }
+                } // End of foreach(coursecode)
+            }
         }
         return $group;
     } // End process_group_tag()
@@ -454,34 +456,32 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
             }
 
         } else { // Add or update record
-        if ($DB->record_exists_select('user', " suspended = 1 AND idnumber = '$person->idnumber'") ) {
-            $this->log_line("The user for ID # $person->idnumber existed but is suspended.  They will be unsuspended.");
-            $description = $DB->get_field('user', 'description', array('idnumber' => $person->idnumber));
-            $DB->set_field('user', 'suspended', 0, array('idnumber' => $person->idnumber));
-            $DB->set_field('user', 'username', $person->username, array('idnumber' => $person->idnumber));
-            $DB->set_field('user', 'email', $person->email, array('idnumber' => $person->idnumber));
-            $DB->set_field('user', 'auth', "cas", array('idnumber' => $person->idnumber));
-            $DB->set_field('user', 'description', $description . "---UNSUSPENDED via IMS on".date('Y-m-d:H'), array('idnumber' => $person->idnumber));
+            if ($DB->record_exists_select('user', " suspended = 1 AND idnumber = '$person->idnumber'")) {
+                $this->log_line("The user for ID # $person->idnumber existed but is suspended.  They will be unsuspended.");
+                $description = $DB->get_field('user', 'description', array('idnumber' => $person->idnumber));
+                $DB->set_field('user', 'suspended', 0, array('idnumber' => $person->idnumber));
+                $DB->set_field('user', 'username', $person->username, array('idnumber' => $person->idnumber));
+                $DB->set_field('user', 'email', $person->email, array('idnumber' => $person->idnumber));
+                $DB->set_field('user', 'auth', "cas", array('idnumber' => $person->idnumber));
+                $DB->set_field('user', 'description', $description . "---UNSUSPENDED via IMS on" . date('Y-m-d:H'), array('idnumber' => $person->idnumber));
 
-        }
+            }
             $tst = $DB->get_field('user', 'id', array('idnumber' => $person->idnumber));
             // If the user exists (matching sourcedid) then we don't need to do anything.
             if (!$DB->get_field('user', 'id', array('idnumber' => $person->idnumber)) && $createnewusers) {
                 // If they don't exist and haven't a defined username, we log this as a potential problem.
                 if ((!isset($person->username)) || (strlen($person->username) == 0)) {
                     $this->log_line("Cannot create new user for ID # $person->idnumber - no username listed in IMS data for this person.");
-                }
-                else if ($DB->record_exists_select('user', "username = '$person->username' AND idnumber is null") ) {
+                } else if ($DB->record_exists_select('user', "username = '$person->username' AND idnumber is null")) {
                     $this->log_line("*****A User record for '$person->username' and ID number $person->idnumber is null.");
                     // If their idnumber is not registered but their user ID is and does not have an idnumber,
                     //then add their idnumber to their record
-		            //not fixing anything
+                    //not fixing anything
                     //$DB->set_field('user', 'idnumber', $person->idnumber, array('username' => $person->username));
-                }
-                else if ($DB->record_exists_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'")) {
+                } else if ($DB->record_exists_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'")) {
                     $other_person = $DB->get_record_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'");
                     $this->log_line("******The username is in use and we need to disable the previous account record for '$other_person->username' and ID number $other_person->idnumber as $person->idnumber wants it.");
-                    $this->log_line("******Changing the username for '$other_person->username' and ID number $other_person->idnumber to $other_person->username.".time());
+                    $this->log_line("******Changing the username for '$other_person->username' and ID number $other_person->idnumber to $other_person->username." . time());
                     //$DB->set_field('user', 'suspended', 1, array('username' => $other_person->username));
                     //$DB->set_field('user', 'description', "This persons account was deactivated on ".date('Y-m-d:H')." as the idnumber no longer has an active account", array('username' => $other_person->username));
                     //$DB->set_field('user', 'username', $other_person->username.time(), array('username' => $other_person->username));
@@ -508,8 +508,8 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                 $DB->set_field('user', 'deleted', 0, array('idnumber' => $person->idnumber));
             } elseif ($DB->get_field('user', 'idnumber', array('username' => $person->username))
                 &&
-                $DB->get_field('user', 'idnumber', array('username' => $person->username) != $person->idnumber ))
-                {
+                $DB->get_field('user', 'idnumber', array('username' => $person->username) != $person->idnumber)
+            ) {
                 $this->log_line("User record already exists for user '$person->username' (ID number $person->idnumber).");
 
                 // Make sure their "deleted" field is set to zero.
