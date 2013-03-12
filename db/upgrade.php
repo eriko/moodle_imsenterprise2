@@ -31,7 +31,7 @@ function xmldb_enrol_imsenterprise2_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
 
-        upgrade_plugin_savepoint(true, 2012091600, 'enrol', 'imsenterprise2');
+        upgrade_plugin_savepoint(true, $plugin->version = 2013030700, 'enrol', 'imsenterprise2');
 
 
 
