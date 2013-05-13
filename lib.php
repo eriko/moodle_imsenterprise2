@@ -583,7 +583,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                     // The actual processing (ensuring a group record exists, etc) occurs below, in the enrol-a-student clause
                 }
 
-                $rolecontext = get_context_instance(CONTEXT_COURSE, $ship->courseid);
+                $rolecontext = get_context_course::instance($ship->courseid);
                 $rolecontext = $rolecontext->id; // All we really want is the ID
 
 
@@ -771,7 +771,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
      */
     private function order_default_course_blocks($course)
     {
-        $contextid = get_context_instance(CONTEXT_COURSE, $course->id)->id;
+        $contextid = get_context_course::instance($course->id)->id;
         global $DB;
         $instances = $DB->get_recordset('block_instances', array('parentcontextid' => $contextid));
         foreach ($instances as $instance) {
