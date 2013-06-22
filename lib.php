@@ -583,7 +583,7 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                     // The actual processing (ensuring a group record exists, etc) occurs below, in the enrol-a-student clause
                 }
 
-                $rolecontext = get_context_course::instance($ship->courseid);
+                $rolecontext = context_course::instance($ship->courseid);
                 $rolecontext = $rolecontext->id; // All we really want is the ID
 
 
