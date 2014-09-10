@@ -168,10 +168,12 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
             } elseif (isset($prev_time) && ($filemtime <= $prev_time)) {
                 $fileisnew = false;
                 $this->log_line('File modification time is not more recent than last update - skipping processing.');
-            } elseif (isset($prev_md5) && ($md5 == $prev_md5)) {
-                $fileisnew = false;
-                $this->log_line('File MD5 hash is same as on last update - skipping processing.');
-            } else {
+            }
+            //elseif (isset($prev_md5) && ($md5 == $prev_md5)) {
+            //    $fileisnew = false;
+            //    $this->log_line('File MD5 hash is same as on last update - skipping processing.');
+            //}
+            else {
                 $fileisnew = true; // Let's process it!
             }
 
@@ -481,10 +483,10 @@ class enrol_imsenterprise2_plugin extends enrol_plugin
                 } else if ($DB->record_exists_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'")) {
                     $other_person = $DB->get_record_select('user', "username = '$person->username' AND idnumber != '$person->idnumber'");
                     $this->log_line("******The username is in use and we need to disable the previous account record for '$other_person->username' and ID number $other_person->idnumber as $person->idnumber wants it.");
-                    $this->log_line("******Changing the username for '$other_person->username' and ID number $other_person->idnumber to $other_person->username." . time());
-                    //$DB->set_field('user', 'suspended', 1, array('username' => $other_person->username));
-                    //$DB->set_field('user', 'description', "This persons account was deactivated on ".date('Y-m-d:H')." as the idnumber no longer has an active account", array('username' => $other_person->username));
-                    //$DB->set_field('user', 'username', $other_person->username.time(), array('username' => $other_person->username));
+                    $this->log_line("******Changing the username for '$other_person->username'  to $other_person->username." . time()."of the user with an ID number $other_person->idnumber");
+                    $DB->set_field('user', 'suspended', 1, array('username' => $other_person->username));
+                    $DB->set_field('user', 'description', "This persons account was deactivated on ".date('Y-m-d:H')." as the idnumber no longer has an active account", array('username' => $other_person->username));
+                    $DB->set_field('user', 'username', $other_person->username.time(), array('username' => $other_person->username));
 
                 } else {
 
